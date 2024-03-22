@@ -16,6 +16,8 @@ import CartScreen from "../screens/CartScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import ConfirmationScreen from "../screens/ConfirmationScreen";
 import OrderScreen from "../screens/OrderScreen";
+import { ViewPropTypes } from 'deprecated-react-native-prop-types';
+
 
 const StackNavigator = () => {
   const Stack = createNativeStackNavigator();
@@ -75,7 +77,7 @@ const StackNavigator = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator>
-        <Stack.Screen
+        {/* <Stack.Screen
           name="Login"
           component={LoginScreen}
           options={{ headerShown: false }}
@@ -84,7 +86,7 @@ const StackNavigator = () => {
           name="Register"
           component={RegisterScreen}
           options={{ headerShown: false }}
-        />
+        /> */}
         <Stack.Screen
           name="Main"
           component={BottomTabs}
@@ -120,7 +122,5 @@ const StackNavigator = () => {
     </NavigationContainer>
   );
 };
-
 export default StackNavigator;
-
 const styles = StyleSheet.create({});

@@ -25,6 +25,9 @@ import { BottomModal, SlideAnimation, ModalContent } from "react-native-modals";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UserType } from "../UserContext";
 import jwt_decode from "jwt-decode";
+import React from 'react';
+import { View } from 'react-native';
+import FeedbackForm from './components/FeedbackForm';
 
 const HomeScreen = () => {
   const list = [
@@ -662,3 +665,12 @@ const HomeScreen = () => {
 export default HomeScreen;
 
 const styles = StyleSheet.create({});
+const HomeScreen = () => {
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <FeedbackForm />
+    </View>
+  );
+};
+
+export default HomeScreen;

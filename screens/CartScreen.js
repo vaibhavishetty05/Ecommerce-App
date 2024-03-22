@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -7,7 +8,6 @@ import {
   TextInput,
   Image,
 } from "react-native";
-import React from "react";
 import { Feather } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
@@ -17,12 +17,14 @@ import {
   removeFromCart,
 } from "../redux/CartReducer";
 import { useNavigation } from "@react-navigation/native";
+import CheckBox from "react-native-checkbox"; // Import CheckBox from react-native-checkbox
 
 const CartScreen = () => {
   const cart = useSelector((state) => state.cart.cart);
-  console.log(cart);
+  const [selectedItems, setSelectedItems] = useState([]);
   const total = cart
-    ?.map((item) => item.price * item.quantity)
+    ?.filter((item) => selectedItems.includes(item.id))
+    .map((item) => item.price * item.quantity)
     .reduce((curr, prev) => curr + prev, 0);
   const dispatch = useDispatch();
   const increaseQuantity = (item) => {
@@ -33,8 +35,17 @@ const CartScreen = () => {
   };
   const deleteItem = (item) => {
     dispatch(removeFromCart(item));
+    setSelectedItems(selectedItems.filter((id) => id !== item.id));
   };
   const navigation = useNavigation();
+  const toggleItemSelection = (itemId) => {
+    if (selectedItems.includes(itemId)) {
+      setSelectedItems(selectedItems.filter((id) => id !== itemId));
+    } else {
+      setSelectedItems([...selectedItems, itemId]);
+    }
+  };
+
   return (
     <ScrollView style={{ marginTop: 55, flex: 1, backgroundColor: "white" }}>
       <View
@@ -87,7 +98,7 @@ const CartScreen = () => {
           marginTop: 10,
         }}
       >
-        <Text>Proceed to Buy ({cart.length}) items</Text>
+        <Text>Proceed to Buy ({selectedItems.length}) items</Text>
       </Pressable>
 
       <Text
@@ -114,13 +125,18 @@ const CartScreen = () => {
             key={index}
           >
             <Pressable
+              onPress={() => toggleItemSelection(item.id)}
               style={{
                 marginVertical: 10,
                 flexDirection: "row",
                 justifyContent: "space-between",
               }}
             >
-              <View>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <CheckBox
+                  checked={selectedItems.includes(item.id)}
+                  onChange={() => toggleItemSelection(item.id)}
+                />
                 <Image
                   style={{ width: 140, height: 140, resizeMode: "contain" }}
                   source={{ uri: item?.image }}
@@ -143,9 +159,6 @@ const CartScreen = () => {
                   }}
                 />
                 <Text style={{ color: "green" }}>In Stock</Text>
-                {/* <Text style={{ fontWeight: "500", marginTop: 6 }}>
-                  {item?.rating?.rate} ratings
-                </Text> */}
               </View>
             </Pressable>
 
@@ -229,7 +242,7 @@ const CartScreen = () => {
                 <Text>Delete</Text>
               </Pressable>
             </Pressable>
-
+  
             <Pressable
               style={{
                 flexDirection: "row",
@@ -250,7 +263,7 @@ const CartScreen = () => {
               >
                 <Text>Save For Later</Text>
               </Pressable>
-
+  
               <Pressable
                 style={{
                   backgroundColor: "white",
@@ -269,8 +282,9 @@ const CartScreen = () => {
       </View>
     </ScrollView>
   );
-};
-
-export default CartScreen;
-
-const styles = StyleSheet.create({});
+  };
+  
+  export default CartScreen;
+  
+  const styles = StyleSheet.create({});
+  
