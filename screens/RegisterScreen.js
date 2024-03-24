@@ -1,5 +1,4 @@
 import {
-  StyleSheet,
   Text,
   View,
   SafeAreaView,
@@ -8,6 +7,8 @@ import {
   KeyboardAvoidingView,
   TextInput,
   Alert,
+  StyleSheet,
+  TouchableOpacity,
 } from "react-native";
 import React, { useState } from "react";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -15,43 +16,67 @@ import { AntDesign } from "@expo/vector-icons";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
+import { auth, db } from "../firebaseConfig";
+import { setDoc, doc } from "firebase/firestore";
+import { createUserWithEmailAndPassword } from "@firebase/auth";
+import * as ImagePicker from "expo-image-picker";
+import Colors from "../utils/Colors";
 
 const RegisterScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [image, setImage] = useState(null);
   const navigation = useNavigation();
-  const handleRegister = () => {
-    const user = {
-      name: name,
-      email: email,
-      password: password,
-    };
 
-    // send a POST  request to the backend API to register the user
-    axios
-      .post("http://localhost:8000/register", user)
-      .then((response) => {
-        console.log(response);
-        Alert.alert(
-          "Registration successful",
-          "You have been registered Successfully"
-        );
-        setName("");
-        setEmail("");
-        setPassword("");
-      })
-      .catch((error) => {
-        Alert.alert(
-          "Registration Error",
-          "An error occurred while registering"
-        );
-        console.log("registration failed", error);
-      });
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.cancelled) {
+      // const imageBlob = await uploadImageAsync(result.assets[0].uri);
+      // setUserDetail(prevState => ({ ...prevState, image: imageBlob }));
+      setImage(result.assets[0].uri);
+    }
+  };
+
+  const handleRegister = () => {
+    if (email === "" || password === "" || name === "") {
+      Alert.alert(
+        "Invalid Details",
+        "Please enter all the credentials",
+        [{ text: "OK", onPress: () => console.log("OK Pressed") }],
+        { cancelable: false }
+      );
+    } else {
+      createUserWithEmailAndPassword(auth, email, password).then(
+        (userCredentials) => {
+          const user = userCredentials._tokenResponse.email;
+          const uid = auth.currentUser.uid;
+
+          setDoc(doc(db, "vaibhavi database", `${uid}`), {
+            email: email,
+            password: password,
+            name: name,
+          });
+
+          navigation.navigate("Main");
+        }
+      );
+    }
   };
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: "white", alignItems: "center",marginTop:50  }}
+      style={{
+        flex: 1,
+        backgroundColor: "white",
+        alignItems: "center",
+        marginTop: 50,
+      }}
     >
       <View>
         <Image
@@ -75,7 +100,17 @@ const RegisterScreen = () => {
             Register to your Account
           </Text>
         </View>
-
+        <TouchableOpacity onPress={pickImage}>
+          <Image
+            source={
+              image == null ? require("../assets/icon.png") : { uri: image }
+            }
+            style={styles.profileImage}
+          />
+          <View style={styles.cameraIcon}>
+            <MaterialIcons name="photo-camera" size={24} color={Colors.GRAY} />
+          </View>
+        </TouchableOpacity>
         <View style={{ marginTop: 70 }}>
           <View
             style={{
@@ -228,4 +263,18 @@ const RegisterScreen = () => {
 
 export default RegisterScreen;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  profileImage: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    borderWidth: 2,
+    borderColor: Colors.BLACK,
+  },
+  cameraIcon: {
+    position: "absolute",
+    bottom: 0,
+    right: 10,
+    zIndex: 9999,
+  },
+});

@@ -8,6 +8,7 @@ import {
   Pressable,
   TextInput,
   Image,
+  TouchableOpacity,
 } from "react-native";
 import React, { useState, useEffect, useCallback, useContext } from "react";
 import { Feather } from "@expo/vector-icons";
@@ -25,11 +26,25 @@ import { BottomModal, SlideAnimation, ModalContent } from "react-native-modals";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UserType } from "../UserContext";
 import jwt_decode from "jwt-decode";
-import React from 'react';
-import { View } from 'react-native';
-import FeedbackForm from './components/FeedbackForm';
+import * as Location from 'expo-location';
+
 
 const HomeScreen = () => {
+
+  const [location, setLocation] = useState(null);
+const [errorMsg, setErrorMsg] = useState(null);
+
+const getLocation = async () => {
+  let { status } = await Location.requestForegroundPermissionsAsync();
+  if (status !== 'granted') {
+    setErrorMsg('Permission to access location was denied');
+    return;
+  }
+
+  let location = await Location.getCurrentPositionAsync({});
+  setLocation(location);
+};
+
   const list = [
     {
       id: "0",
@@ -637,14 +652,19 @@ const HomeScreen = () => {
               </Text>
             </View>
 
-            <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
-            >
-              <Ionicons name="locate-sharp" size={22} color="#0066b2" />
-              <Text style={{ color: "#0066b2", fontWeight: "400" }}>
-                Use My Currect location
-              </Text>
-            </View>
+            <TouchableOpacity onPress={getLocation}>
+  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+    <Ionicons name="locate-sharp" size={22} color="#0066b2" />
+    <Text style={{ color: '#0066b2', fontWeight: '400' }}>
+      Use My Current Location
+    </Text>
+    {location && (
+  <Text>
+    Latitude: {location.coords.latitude}, Longitude: {location.coords.longitude}
+  </Text>
+)}
+  </View>
+</TouchableOpacity>
 
             <View
               style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
@@ -665,12 +685,12 @@ const HomeScreen = () => {
 export default HomeScreen;
 
 const styles = StyleSheet.create({});
-const HomeScreen = () => {
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <FeedbackForm />
-    </View>
-  );
-};
+// const HomeScreen = () => {
+//   return (
+//     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+//       <FeedbackForm />
+//     </View>
+//   );
+// };
 
-export default HomeScreen;
+// export default HomeScreen;

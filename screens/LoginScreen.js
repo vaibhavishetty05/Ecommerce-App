@@ -6,52 +6,60 @@ import {
   Image,
   KeyboardAvoidingView,
   TextInput,
+  TouchableOpacity,
   Pressable,
 } from "react-native";
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { MaterialIcons } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { signInWithEmailAndPassword } from "@firebase/auth";
+import { auth } from "../firebaseConfig";
+import * as LocalAuthentication from "expo-local-authentication";
 
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isBiometricSupported, setIsBiometricSupported] = useState(false);
+
   const navigation = useNavigation();
+
   useEffect(() => {
-    const checkLoginStatus = async () => {
-      try {
-        const token = await AsyncStorage.getItem("authToken");
-
-        if (token) {
-          navigation.replace("Main");
-        }
-      } catch (err) {
-        console.log("error message", err);
-      }
+    const getBiometricStatus = async () => {
+      const biometricAvailable = await LocalAuthentication.hasHardwareAsync();
+      setIsBiometricSupported(biometricAvailable);
     };
-    checkLoginStatus();
+    getBiometricStatus();
   }, []);
-  const handleLogin = () => {
-    const user = {
-      email: email,
-      password: password,
-    };
 
-    axios
-      .post("http://localhost:8000/login", user)
-      .then((response) => {
-        console.log(response);
-        const token = response.data.token;
-        AsyncStorage.setItem("authToken", token);
-        navigation.replace("Main");
-      })
-      .catch((error) => {
-        Alert.alert("Login Error", "Invalid Email");
-        console.log(error);
-      });
+  const handleLogin = () => {
+    signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          console.log("user credential", userCredential);
+          const user = userCredential.user;
+          console.log("user details", user);
+          navigation.navigate("Main");
+        })
+        .catch((error) => {
+          Alert.alert("Error", error.message);
+        });
   };
+
+  const handleBiometricAuth = async () => {
+    const biometricAuth = await LocalAuthentication.authenticateAsync({
+      promptMessage: "Login with biometric authentication",
+      cancelLabel: "Cancel",
+      disableDeviceFallback: true,
+    });
+
+    if (biometricAuth.success) {
+      navigation.navigate("Main");
+    } else {
+      Alert.alert("Biometric authentication failed");
+    }
+  }
+
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: "white", alignItems: "center",marginTop:50 }}
@@ -185,6 +193,11 @@ const LoginScreen = () => {
             Login
           </Text>
         </Pressable>
+        {isBiometricSupported && (
+          <TouchableOpacity onPress={handleBiometricAuth} style={styles.biometricButton}>
+            <MaterialIcons name="fingerprint" size={24} color="white" />
+          </TouchableOpacity>
+        )}
 
         <Pressable
           onPress={() => navigation.navigate("Register")}
@@ -201,4 +214,18 @@ const LoginScreen = () => {
 
 export default LoginScreen;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  biometricButton: {
+    width: 200,
+    backgroundColor: "#003580",
+    padding: 15,
+    borderRadius: 7,
+    marginTop: 50,
+  },
+  buttonText: {
+    textAlign: "center",
+    color: "white",
+    fontSize: 17,
+    fontWeight: "bold",
+  },
+});
